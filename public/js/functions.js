@@ -127,3 +127,62 @@
         $('#totale').html(totale.formatNumber(2, ',', '') + "&nbsp;&euro;");
     }
     
+    
+/*
+ *  Order classes
+ *  Gestisce le operazioni di modifica e inserimento di Items nell'Ordine
+ */
+    var UserOrder = {
+        products: {},
+                
+        initByParams: function(iduser, idproduct, prezzo, qta_reale) {
+            if( !(iduser in this.products) ) {
+                this.products[iduser] = new Array();
+            }
+            this.products[iduser][idproduct] = {
+                prezzo: parseFloat(prezzo), 
+                qta_reale: parseFloat(qta_reale)
+            };
+            console.log("u: "+iduser +" - p: "+ idproduct + " - " + prezzo +" x "+qta_reale + " = " + (prezzo * qta_reale));
+        },
+        
+        setQta: function(iduser, idproduct, qta) {
+            if(this.ifExists(iduser, idproduct)) {
+                this.products[iduser][idproduct].qta_reale = qta;
+            }
+        },
+
+        calculatePartial: function(iduser, idproduct) {
+            if(this.ifExists(iduser, idproduct)) {
+                return this.products[iduser][idproduct].prezzo * this.products[iduser][idproduct].qta_reale;
+            }
+            return 0;
+        },
+        
+        calculateTotal: function(iduser) {
+            var totale = 0;
+            if(iduser in this.products) {
+                if( Object.keys(this.products[iduser]).length > 0 ) {
+                    for(ppi in this.products[iduser]) 
+                    {
+                        totale += this.calculatePartial(iduser, ppi);
+                    }
+                }
+            }
+            return totale;
+        },
+        
+        ifExists: function(iduser, idproduct) {
+            if(iduser in this.products) {
+                if( idproduct in this.products[iduser] ) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+    };
+    
+    var Order = {    
+        users : {},
+    }
