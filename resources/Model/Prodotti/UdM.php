@@ -7,6 +7,7 @@
 class Model_Prodotti_UdM {
     
     private $_arUdM = array(
+        'Bottiglia' => 'Bottiglia',
         'Confezione' => 'Confezione',
         'Pezzo'      => 'Pezzo',
         'Kg'         => 'Kg',

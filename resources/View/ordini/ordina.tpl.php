@@ -33,10 +33,17 @@
         <div class="col-md-9">
             <h3 class="no-margin"><?php echo $prodotto->descrizione;?></h3>
             <p>
+        <?php 
+        // MEGA PEZZA per FERMENTO!!
+        if($this->produttore->idproduttore == 23): ?>
+                Produttore: <b><?php echo $prodotto->note; ?></b><br />
+                Costo: <strong><?php echo $this->valuta($prodotto->costo_op);?></strong> / <strong><?php echo $prodotto->udm; ?></strong><br />
+        <?php else: ?>
                 Categoria: <strong><?php echo $prodotto->categoria_sub; ?></strong><br />
                 Costo: <strong><?php echo $this->valuta($prodotto->costo_op);?></strong> / <strong><?php echo $prodotto->udm; ?></strong><br />
-        <?php if($prodotto->note != ""): ?>
+            <?php if($prodotto->note != ""): ?>
                 <a href="javascript:void(0)" class="note" data-toggle="popover" title="" data-content="<?php echo $prodotto->note; ?>">Visualizza note</a>
+            <?php endif; ?>
         <?php endif; ?>
             </p>
         </div>
