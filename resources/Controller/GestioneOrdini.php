@@ -31,19 +31,20 @@ class Controller_GestioneOrdini extends MyFw_Controller {
         
     }
     
-    function indexAction() {
-        
+    function indexAction() 
+    {
         $filter = $this->getParam("filter");
         if(is_null($filter)) 
         {
-            $filter = "PRI"; // DEFAULT value
+            $filter = "Aperto"; // DEFAULT value
         }
         $this->view->filter = $filter;
         
         $ordObj = new Model_Db_Ordini();
         $cObj = new Model_Db_Categorie();
-        $listOrd = $ordObj->getOrdiniByIdIdgroup($this->_userSessionVal->idgroup, $filter);
+        $listOrd = $ordObj->getOrdiniByIdIdgroup($this->_userSessionVal->idgroup);
         $ordini = array();
+        $counterOrdiniStati = array();
         if(count($listOrd) > 0) {
             foreach($listOrd AS $ordine) {
                 $mooObj = new Model_Ordini_Ordine( new Model_AF_OrdineFactory() );
@@ -58,12 +59,22 @@ class Controller_GestioneOrdini extends MyFw_Controller {
                 $categorie = $cObj->getCategoriesByIdOrdine( $mooObj->getIdOrdine() );
                 $mooObj->appendCategorie()->initCategorie_ByObject($categorie);
                 // add Ordine to the list
-                $ordini[] = $mooObj;
+                if($mooObj->getStateName() == $filter)
+                {
+                    $ordini[] = $mooObj;
+                }
+                // add in counter for States
+                if(!isset($counterOrdiniStati[$mooObj->getStateName()]) ) {
+                    $counterOrdiniStati[$mooObj->getStateName()] = 1;
+                } else {
+                    $counterOrdiniStati[$mooObj->getStateName()]++;
+                }
             }
         }
+        $this->view->counterOrdiniStati = $counterOrdiniStati;
         $this->view->ordini = $ordini;
-        // set Referenti Object in View
-        $this->view->refObject = $this->_userSessionVal->refObject;
+        // set Model_Produttori_Permessi Object in View
+        $this->view->permsProduttori = $this->_userSessionVal->permsProduttori;
     }
     
     function newAction() {
@@ -76,45 +87,55 @@ class Controller_GestioneOrdini extends MyFw_Controller {
         $form->removeField("condivisione");
         $form->removeField("iduser_ref");
         $form->removeField("idordine");
-        
+        // Specific error for LISTINI selection
+        $this->view->errorListino = false;
+
         if($this->getRequest()->isPost()) {
             
             // get Post and check if is valid
             $fv = $this->getRequest()->getPost();
             if( $form->isValid($fv) ) 
             {       
-                // BUILD a new Listino
-                $mooObj = new Model_Ordini_Ordine( new Model_AF_OrdineFactory() );
-                $mooObj->appendDati();
-                $mooObj->appendGruppi();
-                
-                // SAVE ORDINE to DB
-                $mooObj->setDataInizio($form->getValue("data_inizio"));
-                $mooObj->setDataFine($form->getValue("data_fine"));
-                $mooObj->setCondivisione("PRI"); // Default is Private
-                
-                if( $mooObj->saveToDB_Dati() ) 
+                // Check listino selection
+                $listini = isset($fv["listini"]) ? $fv["listini"] : null;
+                if(is_array($listini) && count($listini) > 0)
                 {
-                    $idordine = $mooObj->getIdOrdine();
-                    // create a NEW group
-                    $group = new stdClass();
-                    $group->id = $idordine;
-                    $group->idgroup_master = $this->_userSessionVal->idgroup;
-                    $group->idgroup_slave = $this->_userSessionVal->idgroup;
-                    $group->ref_iduser = $this->_iduser;
-                    // add my group
-                    $mooObj->addGroup($group);
-                    $resSave = $mooObj->saveToDB_Gruppi();                
-                    if($resSave)
+                    // BUILD a new Listino
+                    $mooObj = new Model_Ordini_Ordine( new Model_AF_OrdineFactory() );
+                    $mooObj->appendDati();
+                    $mooObj->appendGruppi();
+
+                    // SAVE ORDINE to DB
+                    $mooObj->setDescrizione($form->getValue("descrizione"));
+                    $mooObj->setDataInizio($form->getValue("data_inizio"));
+                    $mooObj->setDataFine($form->getValue("data_fine"));
+                    $mooObj->setCondivisione("PRI"); // Default is Private
+
+                    if( $mooObj->saveToDB_Dati() ) 
                     {
-                        $listini = $fv["listini"];
-                        // Add the products of the selected LISTINI to ORDINI
-                        $ordineObj = new Model_Db_Ordini();
-                        $res = $ordineObj->createOrdiniByListini($idordine, $listini);
-                        if($res) {
-                            $this->redirect("gestione-ordini", "dashboard", array("idordine" => $idordine, "updated" => true));
+                        $idordine = $mooObj->getIdOrdine();
+                        // create a NEW group
+                        $group = new stdClass();
+                        $group->id = $idordine;
+                        $group->idgroup_master = $this->_userSessionVal->idgroup;
+                        $group->idgroup_slave = $this->_userSessionVal->idgroup;
+                        $group->ref_iduser = $this->_iduser;
+                        // add my group
+                        $mooObj->addGroup($group);
+                        $resSave = $mooObj->saveToDB_Gruppi();                
+                        if($resSave)
+                        {
+
+                            // Add the products of the selected LISTINI to ORDINI
+                            $ordineObj = new Model_Db_Ordini();
+                            $res = $ordineObj->createOrdiniByListini($idordine, $listini);
+                            if($res) {
+                                $this->redirect("gestione-ordini", "dashboard", array("idordine" => $idordine, "updated" => true));
+                            }
                         }
                     }
+                } else {
+                    $this->view->errorListino = true;
                 }
             }
         }
@@ -147,8 +168,12 @@ class Controller_GestioneOrdini extends MyFw_Controller {
                 $mllObj->initGruppi_ByObject( $lObj->getGroupsByIdlistino( $mllObj->getIdListino() ) );
                 $mllObj->setMyIdGroup($this->_userSessionVal->idgroup);
                 
-                // add Listino to array
-                array_push($listini, $mllObj);
+                // CHECK VALIDITA' e VISIBILITA'
+                if($mllObj->getValidita()->isValido() &&
+                   $mllObj->getVisibile()->getBool() ) 
+                {
+                    array_push($listini, $mllObj);
+                }
             }
         }
         $this->view->listini = $listini;
@@ -221,6 +246,9 @@ class Controller_GestioneOrdini extends MyFw_Controller {
         /**
          * DISABLE some fields IF cannot manage them
          */
+        if(!$ordine->canManageDescrizione()) {
+            $form->getField("descrizione")->setDisabled();
+        }
         if(!$ordine->canUpdateVisibile()) {
             $form->getField("visibile")->setDisabled();
         }
@@ -233,7 +261,7 @@ class Controller_GestioneOrdini extends MyFw_Controller {
             $form->getField("condivisione")->setDisabled();
             $form->getField("groups")->setDisabled();
         }
-        if(!$ordine->canManageReferente()) {
+        if(!$ordine->canManageIncaricato()) {
             $form->getField("iduser_ref")->setDisabled();
         }
 
@@ -244,6 +272,9 @@ class Controller_GestioneOrdini extends MyFw_Controller {
             $fv = $this->getRequest()->getPost();
             if( $form->isValid($fv) ) 
             {    
+                if($ordine->canManageDescrizione()) {
+                    $ordine->setDescrizione($form->getValue("descrizione"));
+                }
                 if($ordine->canManageDate()) {
                     $ordine->setDataInizio($form->getValue("data_inizio"));
                     $ordine->setDataFine($form->getValue("data_fine"));
@@ -254,7 +285,7 @@ class Controller_GestioneOrdini extends MyFw_Controller {
                     $groupsToShare = isset($fv["groups"]) ? $fv["groups"] : array();
                     $ordine->resetGroups($form->getValue("condivisione"), $groupsToShare);                
                 }
-                if($ordine->canManageReferente()) {
+                if($ordine->canManageIncaricato()) {
                     $iduser_ref = ($form->getValue("iduser_ref") > 0) ? $form->getValue("iduser_ref") : NULL;
                     $ordine->getMyGroup()->setRefIdUser($iduser_ref);
                 }
@@ -277,7 +308,7 @@ class Controller_GestioneOrdini extends MyFw_Controller {
             $form->setValue("data_fine", $ordine->getDataFine(MyFw_Form_Filters_Date::_MYFORMAT_DATETIME_VIEW));
             $form->setValue("iduser_ref", $ordine->getMyGroup()->getRefIdUser());
             $form->setValue("note_consegna", $ordine->getMyGroup()->getNoteConsegna());
-            $form->setValue("visibile", $ordine->getMyGroup()->getVisibile()->getString());
+            $form->setValue("visibile", $ordine->getVisibile()->getString());
             $form->setValue("groups", $ordine->getAllIdgroups());
         }
         
@@ -367,7 +398,7 @@ class Controller_GestioneOrdini extends MyFw_Controller {
         $ordine = $this->_buildOrdine( new Model_AF_UserOrdineFactory() );
         
         // GET PRODUCTS LIST with Qta Ordered
-        $ordCalcObj = new Model_Ordini_Calcoli_Utenti($ordine);
+        $ordCalcObj = new Model_Ordini_CalcoliDecorator($ordine);
         // SET PRODOTTI ORDINATI
         $ordObj = new Model_Db_Ordini();
         $listProdOrdered = $ordObj->getProdottiOrdinatiByIdordineAndIdgroup($ordine->getIdOrdine(),$this->_userSessionVal->idgroup);
@@ -440,7 +471,7 @@ class Controller_GestioneOrdini extends MyFw_Controller {
             if($added) {
                 $prodotti = $ordObj->getProdottiOrdinatiByIdordineAndIdgroup($idordine,$this->_userSessionVal->idgroup);
                 if(is_array($prodotti) && count($prodotti) > 0) {
-                    $ordCalcObj = new Model_Ordini_Calcoli_Utenti();
+                    $ordCalcObj = new Model_Ordini_CalcoliDecorator();
                     $ordCalcObj->setOrdObj($ordine);
                     $ordCalcObj->setProdotti($prodotti);
                     $prodObj = $ordCalcObj->getProdottiByIduser($iduser);
@@ -473,23 +504,18 @@ class Controller_GestioneOrdini extends MyFw_Controller {
         {
             $tipo = "totali";
         }
-        
-        // GET PRODUCTS LIST with Qta Ordered
         $this->view->tipo = $tipo;
-        switch ($tipo) 
-        {
-            case "totali":
-                $ordCalcObj = new Model_Ordini_Calcoli_Totali($ordine);
-                break;
+        
+        // add CALCOLI DECORATOR
+        $ordCalcObj = new Model_Ordini_CalcoliDecorator($ordine);
 
-            case "utenti":
-                $ordCalcObj = new Model_Ordini_Calcoli_Utenti($ordine);
-                break;
-        }
-        // SET PRODOTTI ORDINATI
+        // SET PRODOTTI ORDINATI in DECORATOR
         $ordObj = new Model_Db_Ordini();
         $listProdOrdered = $ordObj->getProdottiOrdinatiByIdordineAndIdgroup($ordine->getIdOrdine(),$this->_userSessionVal->idgroup);
         $ordCalcObj->setProdottiOrdinati($listProdOrdered);
+        
+        //Zend_Debug::dump($ordCalcObj);die;
+        
         $this->view->ordCalcObj = $ordCalcObj;
     }
     

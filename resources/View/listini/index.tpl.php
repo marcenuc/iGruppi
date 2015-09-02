@@ -8,20 +8,20 @@
       
       <div class="row row-myig">
         <div class="col-md-12">
-            <h3 class="no-margin <?php echo ($lObj->canManageListino()) ? "green" : "text-dark"; ?>"><?php echo $lObj->getDescrizione();?></h3>
+            <h3 class="title-list <?php echo ($lObj->canManageListino()) ? "green" : "text-dark"; ?>"><?php echo $lObj->getDescrizione();?> <?php echo $this->createLabelCondivisione($lObj->getCondivisione()); ?></h3>
         </div>
         <div class="col-md-8">
             <p>Produttore: <strong><?php echo $lObj->getProduttoreName(); ?></strong><br />
-                Creato da <a href="mailto: <?php echo $lObj->getReferente_Email(); ?>"><?php echo $lObj->getReferente_Nome(); ?></a> (<?php echo $lObj->getMasterGroup()->getGroupName(); ?>)
+               Gestito da <a href="mailto: <?php echo $lObj->getReferente_Email(); ?>"><?php echo $lObj->getReferente_Nome(); ?></a> (<?php echo $lObj->getMasterGroup()->getGroupName(); ?>)
             </p>
             <h4><span class="text-muted">Prodotti:</span> <?php 
                 $categorie = $lObj->getListaDescrizioniCategorie();
                 echo $this->arrayToString($categorie); 
                 ?></h4>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 text-right">
         <?php if($lObj->canManageListino()): ?>
-            <a role="button" class="btn btn-success" href="/listini/edit/idlistino/<?php echo $lObj->getIdListino(); ?>"><span class="glyphicon glyphicon-user"></span> Gestisci Listino</a>
+            <a role="button" class="btn btn-success" href="/listini/edit/idlistino/<?php echo $lObj->getIdListino(); ?>"><span class="glyphicon glyphicon-pencil"></span> Gestisci Listino</a>
         <?php else: ?>
             <a role="button" class="btn btn-default" href="/listini/view/idlistino/<?php echo $lObj->getIdListino(); ?>"><span class="glyphicon glyphicon-search"></span> Visualizza Listino</a>
         <?php endif; ?>
@@ -34,22 +34,6 @@
       
   </div>
   <div class="col-md-3 col-md-offset-1 leftbar">
-        <a class="btn btn-default btn-mylg" href="/listini/add"><span class="glyphicon glyphicon-plus"></span> Nuovo listino</a>
-        <div class="panel-group" id="accordion">
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h4 class="panel-title">
-                <a class="accordion-toggle" data-toggle="collapse" href="#collapseOne"><span class="glyphicon glyphicon-filter"></span> Filtra listini</a>
-              </h4>
-            </div>
-            <div id="collapseOne" class="panel-collapse collapse in">
-              <div class="panel-body">
-                <a <?php if($this->filter == "PRI"){ echo 'class="selected"'; } ?> href="/listini/index/filter/PRI">Listini privati</a>
-                <a <?php if($this->filter == "SHA"){ echo 'class="selected"'; } ?> href="/listini/index/filter/SHA">Listini condivisi</a>
-                <a <?php if($this->filter == "PUB"){ echo 'class="selected"'; } ?> href="/listini/index/filter/PUB">Listini pubblici</a>
-              </div>
-            </div>
-          </div>
-        </div>
+    <a class="btn btn-default btn-mylg" href="/listini/add"><span class="glyphicon glyphicon-plus"></span> Nuovo listino</a>
   </div>
 </div>

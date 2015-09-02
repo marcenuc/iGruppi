@@ -18,17 +18,10 @@ class Controller_Listini extends MyFw_Controller {
 
     function indexAction() 
     {
-        $filter = $this->getParam("filter");
-        if(is_null($filter)) 
-        {
-            $filter = "PRI"; // DEFAULT value
-        }
-        $this->view->filter = $filter;
-        
         // get Elenco Listini per Gruppo
         $lObj = new Model_Db_Listini();
         $cObj = new Model_Db_Categorie();
-        $listiniArray = $lObj->getListiniByIdgroup($this->_userSessionVal->idgroup, $filter);
+        $listiniArray = $lObj->getListiniByIdgroup($this->_userSessionVal->idgroup);
         $listini = array();
         if(!is_null($listiniArray)) {
             foreach ($listiniArray as $stdListino) {
@@ -49,11 +42,16 @@ class Controller_Listini extends MyFw_Controller {
                 $mllObj->initGruppi_ByObject( $lObj->getGroupsByIdlistino( $mllObj->getIdListino() ) );
                 $mllObj->setMyIdGroup($this->_userSessionVal->idgroup);
                 
-                // check for Referente Listino
+                // IF can Manage Listino put the values at the TOP of array
                 if( $mllObj->canManageListino() ) {
                     array_unshift($listini, $mllObj);
                 } else {
-                    array_push($listini, $mllObj);
+                    // CHECK VALIDITA' e VISIBILITA'
+                    if($mllObj->getValidita()->isValido() &&
+                       $mllObj->getVisibile()->getBool() ) 
+                    {
+                        array_push($listini, $mllObj);
+                    }
                 }
             }
         }
@@ -151,7 +149,7 @@ class Controller_Listini extends MyFw_Controller {
         // set DATI in Listino
         $mllObj->initDati_ByObject($listino);
         
-        // check REFERENTE, controllo per i furbi (non Referenti)
+        // check canManageListino, controllo per i furbi (non autorizzati)
         if(!$mllObj->canManageListino()) {
             $this->redirect("index", "error", array('code' => 401));
         }
@@ -228,9 +226,9 @@ class Controller_Listini extends MyFw_Controller {
         } else {
             // build array values for form
             $form->setValues($mllObj->getDatiValues());
-            $form->setValue("valido_dal", $mllObj->getMyGroup()->getValidita()->getDal(MyFw_Form_Filters_Date::_MYFORMAT_DATE_VIEW));
-            $form->setValue("valido_al", $mllObj->getMyGroup()->getValidita()->getAl(MyFw_Form_Filters_Date::_MYFORMAT_DATE_VIEW));
-            $form->setValue("visibile", $mllObj->getMyGroup()->getVisibile()->getString());
+            $form->setValue("valido_dal", $mllObj->getValidita()->getDal(MyFw_Form_Filters_Date::_MYFORMAT_DATE_VIEW));
+            $form->setValue("valido_al", $mllObj->getValidita()->getAl(MyFw_Form_Filters_Date::_MYFORMAT_DATE_VIEW));
+            $form->setValue("visibile", $mllObj->getVisibile()->getString());
             $form->setValue("groups", $mllObj->getAllIdgroups());
 
         }
@@ -240,6 +238,43 @@ class Controller_Listini extends MyFw_Controller {
         $this->view->form = $form;
         $this->view->updated = $this->getParam("updated");
     }
+    
+    function viewAction()
+    {
+        $idlistino = $this->getParam("idlistino");
+        if(is_null($idlistino)) 
+        {
+            $this->redirect("listini", "index");
+        }
+        
+        // init Listino DB Model to get data
+        $lObj = new Model_Db_Listini();
+        $listino = $lObj->getListinoById($idlistino);
+
+        // Create Listino Chain objects
+        $mllObj = new Model_Listini_Listino();
+        $mllObj->appendDati()
+               ->appendGruppi()
+               ->appendProdotti()
+               ->appendCategorie();
+        
+        // set DATI in Listino
+        $mllObj->initDati_ByObject($listino);
+        
+        // set GROUPS in Listino
+        $mllObj->initGruppi_ByObject( $lObj->getGroupsByIdlistino($idlistino) );
+        $mllObj->setMyIdGroup($this->_userSessionVal->idgroup);
+        // add All PRODOTTI by Listino
+        $objModel = new Model_Db_Prodotti();
+        $prodotti = $objModel->getProdottiByIdListino($idlistino);
+        $mllObj->initProdotti_ByObject( $prodotti );
+
+        // get CATEGORIE by array $prodotti
+        $mllObj->initCategorie_ByObject($prodotti);
+        
+        $this->view->listino = $mllObj;
+    }
+
     
     function importaAction()
     {
@@ -256,18 +291,36 @@ class Controller_Listini extends MyFw_Controller {
         echo json_encode($result);
     }
     
-    function updatedataAction()
+    function updateprodottilistinoAction()
     {
         $layout = Zend_Registry::get("layout");
         $layout->disableDisplay();
         
         $idlistino = $this->getParam("idlistino");
+        $idprodotto = $this->getParam("idprodotto");
+        $field = $this->getParam("field");
+        $value = $this->getParam("value");
         
         $lModel = new Model_Db_Listini();
-        $res = $lModel->updateDataListino($idlistino);
-        $result = array('res' => $res);
+        $res = false;
+        switch ($field) {
+            case "attivo_listino":
+            case "costo_listino":
+                $res = $lModel->updateListinoProdotti($idlistino, $idprodotto, $field, $value);
+                break;
+        }
         
-        echo json_encode($result);
+        echo json_encode(array('res' => $res));
     }
     
+    function updatedatalistinoAction()
+    {
+        $layout = Zend_Registry::get("layout");
+        $layout->disableDisplay();
+        
+        $idlistino = $this->getParam("idlistino");
+        $lModel = new Model_Db_Listini();
+        $res = $lModel->updateDataListino($idlistino);
+        echo json_encode(array('res' => $res));
+    }    
 }

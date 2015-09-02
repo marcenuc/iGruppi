@@ -7,6 +7,10 @@
         
         <form id="ordineform" action="<?php echo $this->form->getAction(); ?>" method="post" class="f1n200">
 
+            <fieldset>
+                <?php echo $this->form->renderField('descrizione'); ?>
+            </fieldset>
+            
             <fieldset class="border_top">
                 <legend>Validità ordine</legend>
                 <?php echo $this->form->renderField('visibile'); ?>
@@ -25,7 +29,7 @@
                     <?php echo $this->form->renderField('groups'); ?>
                 </div>
             <?php endif; ?>
-            <?php if($this->ordine->canManageReferente()): ?>
+            <?php if($this->ordine->canManageIncaricato()): ?>
                 <?php echo $this->form->renderField('iduser_ref'); ?>
             <?php endif; ?>
             </fieldset>
@@ -39,7 +43,7 @@
 
         </form>
     </div>
-    <div class="col-md-2 col-right">
+    <div class="col-md-2">
         &nbsp;
     </div>    
 </div>
@@ -53,7 +57,6 @@
         
         $('#data_inizio').datetimepicker({
             lang:   'it',
-            i18n:   { it:{ months:mesi, dayOfWeek:giorni} },
             format: 'd/m/Y H:i',
             onShow: function( ct ){
                 if($('#data_fine').val())
@@ -67,7 +70,6 @@
         
         $('#data_fine').datetimepicker({
             lang:'it',
-            i18n:{ it:{ months:mesi, dayOfWeek:giorni} },
             format:'d/m/Y H:i',
             onShow:function( ct ){
                 if($('#data_inizio').val())

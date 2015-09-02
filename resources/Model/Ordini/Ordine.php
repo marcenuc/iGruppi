@@ -22,15 +22,54 @@ class Model_Ordini_Ordine extends Model_AF_AbstractCoR
     {
         return $this->append("States", $sof );
     }
+    
+    public function isMultiProduttore()
+    {
+        return count($this->getProduttoriList()) > 1;
+    }
 
     /**
-     * Direct access to Extra Spese fot MyGroup
+     * Return Extra Spese part of Group
+     * For PUB get data from Master, others from MyGROUP
      * @return Model_Ordini_Extra_Spese
      */
     public function getSpeseExtra()
     {
-        return $this->getMyGroup()->getExtra();
+        if($this->isPubblico()) {
+            return $this->getMasterGroup()->getExtra();
+        } else {
+            return $this->getMyGroup()->getExtra();
+        }
     }
+    
+    /**
+     * Return VALIDITA part of Group
+     * For PUB get data from Master, others from MyGROUP
+     * @return Model_Builder_Parts_Validita
+     */
+    public function getValidita()
+    {
+        if($this->isPubblico()) {
+            return $this->getMasterGroup()->getValidita();
+        } else {
+            return $this->getMyGroup()->getValidita();
+        }
+    }
+    
+    /**
+     * Return VISIBILE part of Group
+     * For PUB get data from Master, others from MyGROUP
+     * @return Model_Builder_Parts_FlagSN
+     */
+    public function getVisibile()
+    {
+        if($this->isPubblico()) {
+            return $this->getMasterGroup()->getVisibile();
+        } else {
+            return $this->getMyGroup()->getVisibile();
+        }
+    }
+    
     
     
 /*  **************************************************************************
@@ -41,10 +80,11 @@ class Model_Ordini_Ordine extends Model_AF_AbstractCoR
         Visibilità (SI/NO)
         Validità ordine (date dal/al)
         Condivisione
-        Referente Ordine del proprio Gruppo
+        Incaricato Ordine del proprio Gruppo
         Gestione Spese Extra
         Inserimento Nuovo Prodotto
-        Modifica Prodotti (Disponibilità, Prezzo e Offerta)
+        Modifica Prodotti (Prezzo e Offerta)
+        Modifica Prodotti (Disponibilità)
         Modifica Qtà ordinate
 
  *  
@@ -52,7 +92,7 @@ class Model_Ordini_Ordine extends Model_AF_AbstractCoR
 
           * Amministratore del Gruppo
           * Supervisore Ordine
-          * Referente Ordine
+          * Incaricato Ordine
           * Tesoriere
  * 
  */    
@@ -68,10 +108,10 @@ class Model_Ordini_Ordine extends Model_AF_AbstractCoR
     }
     
     /**
-     * Return TRUE if iduser session is Referente ordine
+     * Return TRUE if iduser session is Incaricato ordine
      * @return bool
      */
-    public function isReferenteOrdine()
+    public function isIncaricatoOrdine()
     {
         $iduser = Zend_Auth::getInstance()->getIdentity()->iduser;
         return ($iduser == $this->getMyGroup()->getRefIdUser());
@@ -108,10 +148,19 @@ class Model_Ordini_Ordine extends Model_AF_AbstractCoR
             return true;
         } else if($this->getMyGroup()->isSetUserRef())
         {
-            return $this->isReferenteOrdine();
+            return $this->isIncaricatoOrdine();
         } else {
             return false;
         }
+    }
+    
+    /**
+     * Return TRUE if can modify Descrizione
+     * @return boolean
+     */
+    public function canManageDescrizione()
+    {
+        return $this->isSupervisoreOrdine();
     }
     
     /**
@@ -129,7 +178,8 @@ class Model_Ordini_Ordine extends Model_AF_AbstractCoR
      */
     public function canUpdateVisibile()
     {
-        return ($this->isReferenteOrdine() && $this->is_Pianificato());
+        return ($this->isIncaricatoOrdine() && $this->is_Pianificato()) OR
+               ($this->isAdminForGroup() && $this->is_Aperto());
     }
 
     /**
@@ -154,7 +204,7 @@ class Model_Ordini_Ordine extends Model_AF_AbstractCoR
      * Return TRUE if can manage UsersRef for this group
      * @return bool
      */
-    public function canManageReferente()
+    public function canManageIncaricato()
     {
         return ($this->isAdminForGroup() && !$this->is_Archiviato());
     }
@@ -166,7 +216,7 @@ class Model_Ordini_Ordine extends Model_AF_AbstractCoR
      */
     public function canManageSpeseExtra()
     {
-        return ($this->isReferenteOrdine() && $this->is_Arrivato());
+        return ($this->isIncaricatoOrdine() && $this->is_Arrivato());
     }
     
     /**
@@ -179,12 +229,24 @@ class Model_Ordini_Ordine extends Model_AF_AbstractCoR
     }
     
     /**
-     * Return TRUE Se il Referente può modificare i prodotti (prezzo, offerta e disponibilità)
+     * Return TRUE se può modificare i prodotti (prezzo e offerta)
      * @return boolean
      */
-    public function canModificaProdotti()
+    public function canModificaProdottiPrezzo()
     {
         return ($this->isSupervisoreOrdine() && ($this->is_Pianificato() || $this->is_Arrivato()) );
+    }
+    
+    /**
+     * Return TRUE se può modificare i prodotti (disponibilità)
+     * @return boolean
+     */
+    public function canModificaProdottiDisponibilita()
+    {
+        return (
+                ( $this->isSupervisoreOrdine() && ($this->is_Pianificato() || $this->is_Aperto()) ) OR
+                ( $this->isIncaricatoOrdine() && $this->is_Arrivato() )
+        );
     }
         
     /**
@@ -193,7 +255,7 @@ class Model_Ordini_Ordine extends Model_AF_AbstractCoR
      */
     public function canModificaQtaOrdinate()
     {
-        return ($this->isReferenteOrdine() && ($this->is_Chiuso() || $this->is_Arrivato()) );
+        return ($this->isIncaricatoOrdine() && ($this->is_Chiuso() || $this->is_Arrivato()) );
     }
     
     /**

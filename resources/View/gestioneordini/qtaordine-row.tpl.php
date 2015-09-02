@@ -8,11 +8,11 @@
             <small>Pezzatura/Taglio: <?php echo $this->pObj->getDescrizionePezzatura(); ?></small>
         <?php endif; ?>
     </td>
-    <td><a id="btn_<?php echo $keyrow;?>" data-loading-text="..." onclick="jx_ReferenteModifyQta(<?php echo $this->iduser; ?>,<?php echo $this->idprodotto;?>, <?php echo $this->idordine;?>)" class="btn btn-default pull-left" href="javascript:void(0)"><span class="glyphicon glyphicon-pencil"></span></a></td>
+    <td><a id="btn_<?php echo $keyrow;?>" data-loading-text="..." onclick="jx_GestioneOrdini_ModifyQta(<?php echo $this->iduser; ?>,<?php echo $this->idprodotto;?>, <?php echo $this->idordine;?>)" class="btn btn-default pull-left" href="javascript:void(0)"><span class="glyphicon glyphicon-pencil"></span></a></td>
     <td>
         Ordinata: <strong><?php echo $this->pObj->getQta_ByIduser($this->iduser);?></strong><br />
         <span id="qtareal_<?php echo $keyrow;?>">
-            Effettiva: <strong><?php echo $this->pObj->getQtaReale_ByIduser($this->iduser);?></strong> <?php echo $this->pObj->getUdm(); ?>
+            Effettiva: <strong><?php echo $this->formatQta( $this->pObj->getQtaReale_ByIduser($this->iduser));?></strong> <?php echo $this->pObj->getUdm(); ?>
         </span>
         <div style="display: none;" id="div_chgqta_<?php echo $keyrow;?>"></div>
     </td>
@@ -29,7 +29,7 @@
     <td class="danger">&nbsp;</td>
     <td class="danger strike">
         Ordinata: <strong><?php echo $this->pObj->getQta_ByIduser($this->iduser);?></strong><br />
-        Effettiva: <strong><?php echo $this->pObj->getQtaReale_ByIduser($this->iduser);?></strong> <?php echo $this->pObj->getUdm(); ?>
+        Effettiva: <strong><?php echo $this->formatQta( $this->pObj->getQtaReale_ByIduser($this->iduser));?></strong> <?php echo $this->pObj->getUdm(); ?>
     </td>
     <td class="danger text-right">
         <strong class="no_strike">NON DISPONIBILE!</strong>

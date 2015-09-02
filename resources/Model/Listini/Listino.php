@@ -15,7 +15,33 @@ class Model_Listini_Listino extends Model_AF_AbstractCoR
         $this->factoryClass = new Model_AF_ListinoFactory();
     }
 
-            
+    /**
+     * Return VALIDITA part of Group
+     * For PUB get data from Master, others from MyGROUP
+     * @return Model_Builder_Parts_Validita
+     */
+    public function getValidita()
+    {
+        if($this->isPubblico()) {
+            return $this->getMasterGroup()->getValidita();
+        } else {
+            return $this->getMyGroup()->getValidita();
+        }
+    }
+    
+    /**
+     * Return VISIBILE part of Group
+     * For PUB get data from Master, others from MyGROUP
+     * @return Model_Builder_Parts_FlagSN
+     */
+    public function getVisibile()
+    {
+        if($this->isPubblico()) {
+            return $this->getMasterGroup()->getVisibile();
+        } else {
+            return $this->getMyGroup()->getVisibile();
+        }
+    }
     
 /*  **************************************************************************
  *  PERMISSION
@@ -59,7 +85,7 @@ class Model_Listini_Listino extends Model_AF_AbstractCoR
     private function isReferenteProduttore()
     {
         $userSessionVal = new Zend_Session_Namespace('userSessionVal');
-        return $userSessionVal->refObject->is_Referente($this->getIdProduttore());
+        return $userSessionVal->permsProduttori->is_Referente($this->getIdProduttore());
     }
     
     private function isOwner()

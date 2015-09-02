@@ -53,6 +53,14 @@ class Model_AF_Ordine_Dati extends Model_AF_Dati
     }
     
     /**
+     * Return Descrizione Ordine
+     * @return string
+     */
+    public function getDescrizione() {
+        return $this->getValue("descrizione");
+    }
+    
+    /**
      * Return Condivisione
      * @return string
      */
@@ -96,6 +104,33 @@ class Model_AF_Ordine_Dati extends Model_AF_Dati
         return $this->getValue("supervisore_group");
     }
     
+    /**
+     * Return TRUE if is PRIVATO (Condivisione = PRI)
+     * @return bool
+     */
+    public function isPrivato()
+    {
+        return ($this->getCondivisione() == "PRI") ? true : false;
+    }
+    
+    /**
+     * Return TRUE if it is SHARED (Condivisione = SHA)
+     * @return bool
+     */
+    public function isCondiviso()
+    {
+        return ($this->getCondivisione() == "SHA") ? true : false;
+    }
+
+    /**
+     * Return TRUE if it is PUBBLICO (Condivisione = PUB)
+     * @return bool
+     */
+    public function isPubblico()
+    {
+        return ($this->getCondivisione() == "PUB") ? true : false;
+    }
+    
 /***************************
  *  GET METHODS
  */    
@@ -128,6 +163,15 @@ class Model_AF_Ordine_Dati extends Model_AF_Dati
     }
 
     /**
+     * Set Descrizione
+     * @param string $v
+     */
+    public function setDescrizione($v)
+    {
+        $this->setValue("descrizione", $v);
+    }
+    
+    /**
      * Set Condivisione
      * @param string $v
      */
@@ -152,14 +196,14 @@ class Model_AF_Ordine_Dati extends Model_AF_Dati
                 // GET IDUSER che apre l'ordine per impostare iduser_ref (SUPERVISORE)
                 $iduser_ref = Zend_Auth::getInstance()->getIdentity()->iduser;
                 // INSERT, idordine does not exists
-                $sth = $db->prepare("INSERT INTO ordini SET iduser_ref= :iduser_ref, data_inizio= :data_inizio, data_fine= :data_fine, condivisione= :condivisione");
-                $res = $sth->execute(array('iduser_ref' => $iduser_ref, 'data_inizio' => $this->getDataInizio(), 'data_fine' => $this->getDataFine(), 'condivisione' => $this->getCondivisione()));
+                $sth = $db->prepare("INSERT INTO ordini SET iduser_ref= :iduser_ref, descrizione= :descrizione, data_inizio= :data_inizio, data_fine= :data_fine, condivisione= :condivisione");
+                $res = $sth->execute(array('iduser_ref' => $iduser_ref, 'descrizione' => $this->getDescrizione(), 'data_inizio' => $this->getDataInizio(), 'data_fine' => $this->getDataFine(), 'condivisione' => $this->getCondivisione()));
                 $this->setIdOrdine( $db->lastInsertId() );
                 return $res;
             } else {
                 // UPDATE ordini by idordine
-                $sth = $db->prepare("UPDATE ordini SET data_inizio= :data_inizio, data_fine= :data_fine, condivisione= :condivisione WHERE idordine= :idordine");
-                return $sth->execute(array('idordine' => $this->getIdOrdine(), 'data_inizio' => $this->getDataInizio(), 'data_fine' => $this->getDataFine(), 'condivisione' => $this->getCondivisione()));
+                $sth = $db->prepare("UPDATE ordini SET descrizione= :descrizione, data_inizio= :data_inizio, data_fine= :data_fine, condivisione= :condivisione WHERE idordine= :idordine");
+                return $sth->execute(array('idordine' => $this->getIdOrdine(), 'descrizione' => $this->getDescrizione(), 'data_inizio' => $this->getDataInizio(), 'data_fine' => $this->getDataFine(), 'condivisione' => $this->getCondivisione()));
             }
         }
         return true;

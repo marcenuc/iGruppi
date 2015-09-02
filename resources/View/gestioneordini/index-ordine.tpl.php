@@ -1,17 +1,12 @@
       <div class="row-myig">
           <div class="row">
             <div class="col-md-12">
-                <h3 class="no-margin">Ordine del <strong><?php echo $this->date($this->ordine->getDataInizio(), '%d %B %Y');?></strong></h3>
-                <p><strong><?php echo $this->arrayToString( $this->ordine->getProduttoriList() ); ?></strong></p>
-                <h5><span class="text-muted">Prodotti:</span> <?php 
-                    $categorie = $this->ordine->getListaDescrizioniCategorie();
-                    echo $this->arrayToString($categorie); 
-                    ?></h5>
-                <h5><span class="text-muted">Referente ordine:</span> 
+                <?php echo $this->partial('gestioneordini/header-title.tpl.php', array('ordine' => $this->ordine) ); ?>
+                <h5> 
                     <?php if(!$this->ordine->getMyGroup()->isSetUserRef()): ?>
-                        <b class="text-danger">Nessun referente ordine assegnato!</b>
+                        <b class="text-danger">Nessun "Incaricato ordine" assegnato!</b>
                     <?php else: ?>
-                        <?php echo $this->ordine->getMyGroup()->getRefNome(); ?>
+                        <span class="text-muted">Incaricato ordine:</span> <?php echo $this->ordine->getMyGroup()->getRefNome(); ?>
                     <?php endif; ?>
                             
                 </h5>
@@ -26,7 +21,7 @@
                     <em>Chiusura</em>: <strong><?php echo $this->date($this->ordine->getDataFine(), '%d/%m/%Y');?></strong> alle <?php echo $this->date($this->ordine->getDataFine(), '%H:%M');?></strong>
                 </p>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4 text-right">
       <?php if($this->ordine->canManageOrdine()): ?>
                 <a role="button" id="gest_ordine_<?php echo $this->ordine->getIdOrdine();?>" class="btn btn-success" href="/gestione-ordini/dashboard/idordine/<?php echo $this->ordine->getIdOrdine(); ?>"><span class="glyphicon glyphicon-pencil"></span> Gestisci Ordine</a>
       <?php endif; ?>

@@ -69,7 +69,7 @@
             });
     }
     
-    function jx_ReferenteAddNewProd(iduser, idordine)
+    function jx_GestioneOrdini_AddNewProd(iduser, idordine)
     {
         $('#td_add_'+iduser+' > a').button('loading');
         $.getJSON(
@@ -84,7 +84,7 @@
 			});
     }
 
-    function jx_ReferenteAddNewProd_Save(iduser, idordine)
+    function jx_GestioneOrdini_AddNewProd_Save(iduser, idordine)
     {
         $('#submit_'+iduser).button('loading');
         var idprodotto = $('#addprod_form_'+iduser+' > #idprodotto').val();
@@ -129,7 +129,7 @@
     {
         $('#btn_listino_user_update').button('loading');
         $.getJSON(
-            '/listini/updatedata/',
+            '/listini/updatedatalistino/',
             {idlistino: idlistino},
             function(data) {
                 if(data.res)

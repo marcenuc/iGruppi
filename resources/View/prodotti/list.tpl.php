@@ -31,12 +31,12 @@ if(count($categorie) > 0):
                 Codice: <strong><?php echo $pObj->getCodice(); ?></strong><br />
             <?php echo $this->partial('prodotti/price-box.tpl.php', array('prodotto' => $pObj)); ?>
             <?php if(!$pObj->getAttivoAnagrafica()): ?>
-                <strong class="alert_red">Disabilitato</strong> (Non viene inserito quando crei un nuovo ordine)
+                <strong class="alert_red">NON ATTIVO</strong> (Non viene inserito quando crei un nuovo ordine)
             <?php endif; ?>
             </p>
         </div>
         <div class="col-md-2">
-        <?php if($this->userSessionVal->refObject->canEditProdotti($this->produttore->idproduttore)): ?>
+        <?php if($this->userSessionVal->permsProduttori->canEditProdotti($this->produttore->idproduttore)): ?>
             <a class="btn btn-success" href="/prodotti/edit/idprodotto/<?php echo $pObj->getIdProdotto();?>">Modifica</a>
         <?php endif; ?>
         </div>
@@ -49,9 +49,9 @@ if(count($categorie) > 0):
     <h3>Nessun prodotto!</h3>
 <?php endif; ?>
   </div>
-  <div class="col-md-4 col-right">
+  <div class="col-md-3 col-md-offset-1">
     <div class="bs-sidebar" data-spy="affix" data-offset-top="76" role="complementary">
-<?php if($this->userSessionVal->refObject->canAddProdotti($this->produttore->idproduttore)): ?>
+<?php if($this->userSessionVal->permsProduttori->canAddProdotti($this->produttore->idproduttore)): ?>
       <a class="btn btn-default btn-mylg" href="/prodotti/add/idproduttore/<?php echo $this->produttore->idproduttore;?>"><span class="glyphicon glyphicon-plus"></span> Nuovo prodotto</a>
       <br />
       <br />

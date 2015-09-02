@@ -7,10 +7,10 @@
         <table class="table table-condensed">
             <thead>
               <tr>
-                <th>Quantità</th>
                 <th>Codice</th>
-                <th>Prezzo unitario</th>
                 <th>Descrizione</th>
+                <th class="text-right">Quantità</th>
+                <th>Prezzo unitario</th>
                 <th class="text-right">Totale</th>
               </tr>
             </thead>
@@ -21,22 +21,23 @@
             <?php else: ?>
                 <tr class="danger strike">
             <?php endif; ?>
-                    <td><strong><?php echo $pObj->getQtaReale_ByIduser($iduser);?></strong></td>
                     <td><strong><?php echo $pObj->getCodice();?></strong></td>
-                    <td><?php echo $pObj->getDescrizioneCosto();?></td>
                     <td><?php echo $pObj->getDescrizioneListino();?></td>
+                    <td class="text-right"><strong><?php echo $this->formatQta( $pObj->getQtaReale_ByIduser($iduser), $pObj->getUdm() );?></strong></td>
+                    <td><?php echo $pObj->getDescrizioneCosto();?></td>
                     <td class="text-right"><strong><?php echo $this->valuta($pObj->getTotale_ByIduser($iduser)); ?></strong></td>
                 </tr>        
         <?php endforeach; ?>
-        <?php if($this->ordCalcObj->getSpeseExtra()->has() && $this->ordCalcObj->getTotaleByIduser($iduser)): ?>
-            <?php foreach ($this->ordCalcObj->getSpeseExtra()->get() AS $extra): ?>
+        <?php $extraArray = $this->ordCalcObj->getSpeseExtra_Utente($iduser);
+            if(count($extraArray) > 0): ?>
+            <?php foreach ($extraArray AS $extra): ?>
                 <tr class="warning">
-                    <td colspan="3">&nbsp;</td>
-                    <td><b><?php echo $extra->getDescrizione(); ?></b></td>
-                    <td class="text-right"><strong><?php echo $this->valuta($extra->getParzialeByIduser($this->ordCalcObj, $iduser)); ?></strong></td>
+                    <td>&nbsp;</td>
+                    <td colspan="3"><?php echo $extra["descrizione"]; ?> (<em><?php echo $extra["descrizioneTipo"]; ?></em>)</td>
+                    <td class="text-right"><strong><?php echo $this->valuta($extra["parziale_utente"]); ?></strong></td>
                 </tr>
             <?php endforeach; ?>
-        <?php endif; ?>
+        <?php endif; ?>            
             </tbody>
         </table>        
         

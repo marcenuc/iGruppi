@@ -1,7 +1,7 @@
 <div class="row">
-  <div class="col-md-8">
-    
-    <h3>Ordine <strong class="<?php echo $this->ordine->getStatusCSSClass(); ?>"><?php echo $this->ordine->getStateName(); ?></strong> il <?php echo $this->date($this->ordine->getDataInizio(), '%d/%m/%Y');?> alle <?php echo $this->date($this->ordine->getDataInizio(), '%H:%M');?></h3>
+<div class="col-md-8 col-sm-8">
+    <?php echo $this->partial('ordini/header-title.tpl.php', array('ordine' => $this->ordine) ); ?>
+
 <?php if($this->ordine->is_Aperto()): ?>
     <p>
         Chiusura prevista il <strong><?php echo $this->date($this->ordine->getDataFine(), '%d/%m/%Y');?></strong> alle <?php echo $this->date($this->ordine->getDataFine(), '%H:%M');?></strong>
@@ -25,9 +25,16 @@
         
       <div class="row row-myig<?php if(!$prodotto->isDisponibile()) { echo " box_row_dis"; } ; ?>">
         <div class="col-md-9">
+        <?php if($prodotto->getOffertaOrdine()): ?>
+                <small><span class="label label-danger">Offerta</span></small>
+        <?php endif;?>
+            
             <h3 class="no-margin"><?php echo $prodotto->getDescrizioneListino();?></h3>
             <p>
                 Categoria: <strong><?php echo $prodotto->getSubCategoria(); ?></strong><br />
+        <?php if($this->ordine->isMultiproduttore()): ?>
+                Produttore: <strong><?php echo $prodotto->getProduttore(); ?></strong><br />
+        <?php endif; ?>                
                 <?php echo $this->partial('prodotti/price-box.tpl.php', array('prodotto' => $prodotto)); ?>
         <?php if($prodotto->getNoteListino() != ""): ?>
                 <a href="javascript:void(0)" class="note" data-toggle="popover" title="" data-content="<?php echo $prodotto->getNoteListino(); ?>">Visualizza note</a>
@@ -68,9 +75,9 @@
 <?php endif; ?>
     
   </div>
-  <div class="col-md-4 col-right">
+  <div class="col-md-3 col-md-offset-1 col-sm-4">
 <?php if(count($categorie) > 0): ?>      
-    <div class="bs-sidebar" data-spy="affix" data-offset-top="76" role="complementary">
+    <div class="bs-sidebar" data-spy="affix" data-offset-top="80" role="complementary">
         <div class="totale">
             <h4>Totale: <strong id="totale">Loading...</strong></h4>
             <a role="button" class="btn btn-success" href="/ordini/viewdettaglio/idordine/<?php echo $this->ordine->getIdOrdine();?>"><span class="glyphicon glyphicon-list"></span> Visualizza ordine</a>

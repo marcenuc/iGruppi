@@ -5,6 +5,10 @@
 <?php if(count($this->listini) > 0): ?>
         <form id="ordineform" action="<?php echo $this->form->getAction(); ?>" method="post" class="f1n200">
 
+            <fieldset>
+                <?php echo $this->form->renderField('descrizione'); ?>
+            </fieldset>
+            
             <fieldset class="border_top">
                 <legend>Validità ordine</legend>
                 <?php echo $this->form->renderField('data_inizio'); ?>
@@ -12,6 +16,9 @@
             </fieldset>
             
             <fieldset class="border_top">
+    <?php if($this->errorListino): ?>
+                <div class="alert alert-danger" role="alert">Devi selezionare almeno 1 listino.</div>
+    <?php endif; ?>
                 <legend>Listini</legend>
     <?php foreach($this->listini AS $listino): ?>
                 <div class="row">
@@ -41,7 +48,7 @@
         <h4 class="text-danger">Nessun listino disponibile.</h4>
 <?php endif; ?>
     </div>
-    <div class="col-md-2 col-right">
+    <div class="col-md-2">
         &nbsp;
     </div>    
 </div>     
@@ -50,7 +57,6 @@
     $(function() {
         $('#data_inizio').datetimepicker({
             lang:   'it',
-            i18n:   { it:{ months:mesi, dayOfWeek:giorni} },
             format: 'd/m/Y H:i',
             onShow: function( ct ){
                 if($('#data_fine').val())
@@ -64,7 +70,6 @@
         
         $('#data_fine').datetimepicker({
             lang:'it',
-            i18n:{ it:{ months:mesi, dayOfWeek:giorni} },
             format:'d/m/Y H:i',
             onShow:function( ct ){
                 if($('#data_inizio').val())

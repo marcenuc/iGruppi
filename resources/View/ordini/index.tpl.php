@@ -8,17 +8,10 @@
         $status = $ordine->getStateName();
         ?>
       <div class="row row-myig">
-        <div class="col-md-12">
-            <h3 class="no-margin text-dark"><?php 
-                $categorie = $ordine->getListaDescrizioniCategorie();
-                echo $this->arrayToString($categorie); 
-            ?></h3>
+        <div class="col-md-12 col-sm-12">
+            <?php echo $this->partial('ordini/header-title.tpl.php', array('ordine' => $ordine) ); ?>
         </div>
-        <div class="col-md-8">
-        <?php if( count($categorie) > 0 ): ?>
-            <h5><span class="text-muted">Produttori: </span> <?php echo $this->arrayToString( $ordine->getProduttoriList() ); ?></h5>
-        <?php endif; ?>
-        
+        <div class="col-md-8 col-sm-8">
         <?php if($ordine->is_Pianificato()): ?>
             <h4 class="ordine">
                 Ordine <span class="<?php echo $ordine->getStatusCSSClass(); ?>"><?php echo $ordine->getStateName(); ?></span>
@@ -40,7 +33,7 @@
             </p>
         <?php endif; ?>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4  col-sm-4">
         <?php if($ordine->canUser_OrderProducts()): ?>
             <a href="/ordini/ordina/idordine/<?php echo $ordine->getIdOrdine();?>" class="btn btn-success" style="margin-bottom: 5px;"><span class="glyphicon glyphicon-shopping-cart"></span> Ordina ora!</a>
         <?php endif; ?>
@@ -55,7 +48,7 @@
     <h3>Nessun ordine disponibile con questi filtri di ricerca.</h3>
 <?php endif; ?>
   </div>
-  <div class="col-md-4 col-sm-4 col-right">
+  <div class="col-md-3 col-sm-3 col-md-offset-1 col-sm-offset-1">
       <?php include $this->template('ordini/left-menu.tpl.php'); ?>      
   </div>    
 </div>

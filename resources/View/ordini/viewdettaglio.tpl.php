@@ -1,14 +1,7 @@
-    <h3 class="text-dark"><?php 
-        $categorie = $this->ordine->getListaDescrizioniCategorie();
-        echo $this->arrayToString($categorie); 
-    ?></h3>
+
 <div class="row">
   <div class="col-md-8">
-<?php if( count($categorie) > 0 ): ?>
-    <h5><span class="text-muted">Produttori: </span> <?php echo $this->arrayToString( $this->ordine->getProduttoriList() ); ?></h5>
-<?php endif; ?>
-    <h5>Ordine <strong class="<?php echo $this->ordine->getStatusCSSClass(); ?>"><?php echo $this->ordine->getStateName(); ?></strong></h5>
-    
+<?php echo $this->partial('ordini/header-title.tpl.php', array('ordine' => $this->ordine) ); ?>      
     <p>
 <?php if($this->ordine->is_Aperto()): ?>
         Chiusura prevista il <strong><?php echo $this->date($this->ordine->getDataFine(), '%d/%m/%Y');?></strong> alle <?php echo $this->date($this->ordine->getDataFine(), '%H:%M');?></strong>
@@ -26,6 +19,10 @@
       <div class="row row-myig<?php echo ($pObj->isDisponibile()) ? "" : " box_row_dis" ; ?>">
         <div class="col-md-9">
             <h3 class="no-margin"><?php echo $pObj->getDescrizioneListino();?></h3>
+            Categoria: <strong><?php echo $pObj->getSubCategoria(); ?></strong><br />
+        <?php if($this->ordine->isMultiproduttore()): ?>
+            Produttore: <strong><?php echo $pObj->getProduttore(); ?></strong><br />
+        <?php endif; ?>                
             <p>
                 <?php echo $this->partial('prodotti/price-box.tpl.php', array('prodotto' => $pObj)); ?>
             </p>
@@ -49,18 +46,23 @@
     <h3>Nessun prodotto ordinato.</h3>
 <?php endif; ?>
   </div>
-  <div class="col-md-4 col-right">
+  <div class="col-md-3 col-md-offset-1">
     <div class="bs-sidebar" data-spy="affix" data-offset-top="80" role="complementary">
         <div class="totale">
-        <?php if($this->ordCalcObj->getSpeseExtra()->has() && $this->ordCalcObj->getTotaleByIduser($this->iduser)): ?>
-            <?php foreach ($this->ordCalcObj->getSpeseExtra()->get() AS $extra): ?>
-            <h5><?php echo $extra->getDescrizione(); ?>: <b><?php echo $this->valuta($extra->getParzialeByIduser($this->ordCalcObj, $this->iduser)); ?></b></h5>
-            <?php endforeach; ?>
-            <h5>Totale ordine: <b id="totale"><?php echo $this->valuta($this->ordCalcObj->getTotaleByIduser($this->iduser)) ?></b></h5>
-        <?php endif; ?>
-            <h4>Totale: <strong><?php echo $this->valuta($this->ordCalcObj->getTotaleConExtraByIduser($this->iduser)) ?></strong></h4>
 <?php if($this->ordine->is_Aperto()): ?>
-            <a role="button" class="btn btn-success" href="/ordini/ordina/idordine/<?php echo $this->ordine->getIdOrdine();?>"><span class="glyphicon glyphicon-arrow-left"></span> Continua ad ordinare</a>            
+            <h5>Totale ordine: <b id="totale"><?php echo $this->valuta($this->ordCalcObj->getTotaleByIduser($this->iduser)) ?></b></h5>
+            <a role="button" class="btn btn-success" href="/ordini/ordina/idordine/<?php echo $this->ordine->getIdOrdine();?>"><span class="glyphicon glyphicon-arrow-left"></span> Continua ad ordinare</a>
+<?php else: ?>
+            <h4>Totale: <strong><?php echo $this->valuta($this->ordCalcObj->getTotaleConExtraByIduser($this->iduser)) ?></strong></h4>
+            <h5>Totale ordine: <b id="totale"><?php echo $this->valuta($this->ordCalcObj->getTotaleByIduser($this->iduser)) ?></b></h5>
+        <?php $extraArray = $this->ordCalcObj->getSpeseExtra_Utente($this->iduser);
+            if(count($extraArray) > 0): ?>
+            <h5><b>Spese Extra</b></h5>
+            <?php foreach ($extraArray AS $extra): ?>
+                <h5><?php echo $extra["descrizione"]; ?> (<em><?php echo $extra["descrizioneTipo"]; ?></em>): <strong><?php echo $this->valuta($extra["parziale_utente"]); ?></strong></h5>
+            <?php endforeach; ?>
+        <?php endif; ?>            
+            
 <?php endif; ?>
             
         </div>                    

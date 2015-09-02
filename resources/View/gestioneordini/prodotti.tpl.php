@@ -6,17 +6,12 @@
         <div class="col-md-8">
             <h3>Prodotti inseriti in quest'ordine:</h3>
         </div>
-        <div class="col-md-4 col-right">
+        <div class="col-md-3 col-md-offset-1">
 <!--            <a class="btn btn-default btn-mylg" href="/gestione-ordini/addprodotto/idordine/<?php echo $this->ordine->getIdOrdine();?>"><span class="glyphicon glyphicon-plus"></span> Aggiungi prodotto</a> -->
         </div>    
     </div>
     <div class="row">
         <div class="col-md-12">
-<?php if($this->ordine->isSupervisoreOrdine()): ?>
-    <?php if(!$this->ordine->canModificaProdotti()): ?>
-        <p class="text-danger">Non puoi modificare i Prodotti in questo stato dell'ordine.</p>
-    <?php endif; ?>            
-<?php endif; ?>            
     <?php 
     $arProductsGrid = array();
     $categorie = $this->ordine->getProdottiWithCategoryArray();
@@ -65,7 +60,7 @@ $(document).ready(function () {
         {
           data: 'disponibile_ordine',
           type: 'checkbox',
-          readOnly: <?php echo (!$this->ordine->canModificaProdotti()) ? "true" : "false"; ?>
+          readOnly: <?php echo (!$this->ordine->canModificaProdottiDisponibilita()) ? "true" : "false"; ?>
         },
         {
           data: 'codice',
@@ -80,7 +75,7 @@ $(document).ready(function () {
           type: 'numeric',
           format: '0,0.00 $',
           language: 'it',
-          readOnly: <?php echo (!$this->ordine->canModificaProdotti()) ? "true" : "false"; ?>
+          readOnly: <?php echo (!$this->ordine->canModificaProdottiPrezzo()) ? "true" : "false"; ?>
         },
         {
           data: 'udm',
@@ -90,7 +85,7 @@ $(document).ready(function () {
         {
           data: 'offerta_ordine',
           type: 'checkbox',
-          readOnly: <?php echo (!$this->ordine->canModificaProdotti()) ? "true" : "false"; ?>
+          readOnly: <?php echo (!$this->ordine->canModificaProdottiPrezzo()) ? "true" : "false"; ?>
         },
         {
           data: 'subcat',

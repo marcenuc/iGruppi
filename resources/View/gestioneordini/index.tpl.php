@@ -21,21 +21,22 @@
 <?php endif; ?>
   </div>
   <div class="col-md-3 col-md-offset-1 leftbar">
-<?php if($this->refObject->canOpenNewOrdine()): ?>
+<?php if($this->permsProduttori->canOpenNewOrdine()): ?>
         <a class="btn btn-default btn-mylg" href="/gestione-ordini/new"><span class="glyphicon glyphicon-plus"></span> Nuovo ordine</a>
 <?php endif; ?>        
         <div class="panel-group" id="accordion">
           <div class="panel panel-default">
             <div class="panel-heading">
               <h4 class="panel-title">
-                <a class="accordion-toggle" data-toggle="collapse" href="#collapseOne"><span class="glyphicon glyphicon-filter"></span> Filtra ordini</a>
+                <a class="accordion-toggle" data-toggle="collapse" href="#collapseOne"><span class="glyphicon glyphicon-filter"></span> Filtra ordini per Stato</a>
               </h4>
             </div>
             <div id="collapseOne" class="panel-collapse collapse in">
               <div class="panel-body">
-                <a <?php if($this->filter == "PRI"){ echo 'class="selected"'; } ?> href="/gestione-ordini/index/filter/PRI">Ordini privati</a>
-                <a <?php if($this->filter == "SHA"){ echo 'class="selected"'; } ?> href="/gestione-ordini/index/filter/SHA">Ordini condivisi</a>
-                <a <?php if($this->filter == "PUB"){ echo 'class="selected"'; } ?> href="/gestione-ordini/index/filter/PUB">Ordini pubblici</a>
+    <?php $stati = Model_Ordini_State_OrderFactory::getOrderStatesArray();
+            foreach($stati AS $stato): ?>
+                <a <?php if($this->filter == $stato){ echo 'class="selected"'; } ?> href="/gestione-ordini/index/filter/<?php echo $stato; ?>"><span class="badge"><?php echo isset($this->counterOrdiniStati[$stato]) ? $this->counterOrdiniStati[$stato] : 0; ?></span> <?php echo $stato; ?></a>
+    <?php   endforeach; ?>
               </div>
             </div>
           </div>
