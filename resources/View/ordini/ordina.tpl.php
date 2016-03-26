@@ -25,7 +25,7 @@
      $arTrolley = array();
      if(count($categorie) > 0): 
         foreach ($categorie AS $cat): ?>
-    <span id="cat_<?php echo $cat->getId(); ?>" style="visibility: hidden;"><?php echo $cat->getDescrizione(); ?></span>
+    <span class="categorie_hidden" id="cat_<?php echo $cat->getId(); ?>" style="visibility: hidden;"><?php echo $cat->getDescrizione(); ?></span>
 <?php       foreach ($cat->getSubcat() AS $subcat): 
             echo $this->partial('prodotti/subcat-title.tpl.php', array('cat' => $cat, 'subcat' => $subcat));
                 foreach ($subcat->getProdotti() AS $prodObj):
@@ -34,13 +34,13 @@
                  //Zend_Debug::dump($prodotto);die;
     ?>
         
-      <div class="row row-myig<?php if(!$prodotto->isDisponibile()) { echo " box_row_dis"; } ; ?> div_product_row">
+      <div class="row row-myig<?php if(!$prodotto->isDisponibile()) { echo " box_row_dis"; } ; ?>">
         <div class="col-md-9">
         <?php if($prodotto->getOffertaOrdine()): ?>
                 <small><span class="label label-danger">Offerta</span></small>
         <?php endif;?>
             
-            <h3 class="no-margin product_descrizione"><?php echo $prodotto->getDescrizioneListino();?></h3>
+            <h3 class="no-margin product_descrizione"><?php echo $prodotto->getDescrizioneAnagrafica();?></h3>
             <p>
                 Categoria: <strong><?php echo $prodotto->getSubCategoria(); ?></strong><br />
         <?php if($this->ordine->isMultiproduttore()): ?>
@@ -90,7 +90,8 @@
     <div class="bs-sidebar" data-spy="affix" data-offset-top="80" role="complementary">
         <div class="totale">
             <h4>Totale: <strong id="totale">Loading...</strong></h4>
-            <a role="button" class="btn btn-success" href="/ordini/viewdettaglio/idordine/<?php echo $this->ordine->getIdOrdine();?>"><span class="glyphicon glyphicon-list"></span> Visualizza ordine</a>
+            <a role="button" class="btn btn-success" href="/ordini/viewdettaglio/idordine/<?php echo $this->ordine->getIdOrdine();?>"><span class="glyphicon glyphicon-list"></span> Visualizza ordine</a><br />
+            <small><span id="autosave_alert" style="display: none;"></span>&nbsp;</small>
         </div>
         <input type="text" name="search_products" id="search_products" placeholder="Cerca prodotto..." oninput="searchProducts(this.value);" />
         <br />
@@ -102,54 +103,6 @@
 </div>
 
 <script>
-    
-    // Advanced Search for Prodotti
-    function searchProducts(text)
-    {
-        myText = String(text);
-        found = 0;
-        if(myText.length >= 1) {
-            // hide Categories
-            $(document).find('.subcat-title').each(function(){
-                $(this).hide();
-            });
-            $(document).find('.product_descrizione').each(function(){
-                // search text case insensitive (toLowerCase)
-                if($(this).text().toLowerCase().search(myText.toLowerCase()) === -1 ) {
-                    $(this).parent().parent().hide();
-                } else {
-                    $(this).parent().parent().show();
-                    found++;
-                }
-            });
-            
-            // show NO RESULT
-            if(found === 0) {
-                $('#search_no_result').show();
-                $('#search_num_result').hide();
-            } else {
-                $('#search_no_result').hide();
-                $('#search_num_result').show();
-                $('#search_num_result > h3 > strong').html(found);
-            }
-            
-        } else {
-            // SHOW Categories
-            $(document).find('.subcat-title').each(function(){
-                $(this).show();
-            });
-            // SHOW ALL Products
-            $(document).find('.product_descrizione').each(function(){
-                $(this).parent().parent().show();
-            });
-            // HIDE no result alert
-            $('#search_no_result').hide();
-            $('#search_num_result').hide();
-        }
-    }
-    
-    
-    
     $(document).ready(function () {
 
         // SET idordine

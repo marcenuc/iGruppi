@@ -2,21 +2,27 @@
     <div class="col-md-12">
 <?php 
     $arProductsGrid = array();
-    $arProdottiOrdinati = $this->ordCalcObj->getProdottiOrdinati();
-    if(count($arProdottiOrdinati) > 0):
-        foreach ($arProdottiOrdinati AS $pObj)
+    if(count($this->ordCalcObj->getProdottiUtenti()) > 0):
+        foreach ($this->ordCalcObj->getProdottiUtenti() AS $puObj)
         {
-            $arProductsGrid[] = array(
-                'disponibile_ordine'    => ($pObj->isDisponibile() ? "SI" : "NO"),
-                'produttore'            => $pObj->getProduttore(),
-                'codice'                => $pObj->getCodice(),
-                'descrizione'           => $pObj->getDescrizioneAnagrafica(),
-                'costo_ordine'          => $pObj->getCostoOrdine(),
-                'udm'                   => $pObj->getUdm() .($pObj->hasPezzatura() ? "<br /><small>(Minimo " . $pObj->getDescrizionePezzatura() . ")</small>" : ""),
-                'qta'                   => $pObj->getQta(),
-                'qta_reale'             => $pObj->getQtaReale(),
-                'subcat'                => $pObj->getSubCategoria()
-            );
+            $user = $puObj["user"];
+            $prodotti = $puObj["prodotti"];
+            foreach($prodotti AS $pObj)
+            {
+                $arProductsGrid[] = array(
+                    'user_nome'             => $user->cognome . " " . $user->nome,
+                    'gas_nome'              => $user->nome_gas,
+                    'disponibile_ordine'    => ($pObj->isDisponibile() ? "SI" : "NO"),
+                    'produttore'            => $pObj->getProduttore(),
+                    'codice'                => $pObj->getCodice(),
+                    'descrizione'           => $pObj->getDescrizioneAnagrafica(),
+                    'costo_ordine'          => $pObj->getCostoOrdine(),
+                    'udm'                   => $pObj->getUdm() .($pObj->hasPezzatura() ? "<br /><small>(Minimo " . $pObj->getDescrizionePezzatura() . ")</small>" : ""),
+                    'qta'                   => $pObj->getQta_ByIduser($user->iduser),
+                    'qta_reale'             => $pObj->getQtaReale_ByIduser($user->iduser),
+                    'subcat'                => $pObj->getSubCategoria()
+                );
+            }
         }
 ?>
         <div id="grid-prodotti" class="handsontable myhandsontable"></div>
@@ -25,24 +31,8 @@
 
     <div class="totale_line">
         <div class="sub_menu">
-            <h3 class="totale">Totale: <strong><?php echo $this->valuta($this->ordCalcObj->getTotaleConExtra()); ?></strong></h3>
-    <?php if(1): ?>
             <h3 class="totale">Totale ordine (con IVA): <strong><?php echo $this->valuta($this->ordCalcObj->getTotale()); ?></strong></h3>
             <h3 class="totale">Totale ordine (senza IVA): <strong><?php echo $this->valuta($this->ordCalcObj->getTotaleSenzaIva()); ?></strong></h3>
-    <?php endif; ?>
-    <?php $extraArray = $this->ordCalcObj->getSpeseExtra_Totale();
-        if(count($extraArray) > 0): ?>
-            <h4>Totali Spese Extra</h4>
-            <p>
-        <?php foreach ($extraArray AS $extra): ?>
-            <?php echo $extra["descrizione"]; ?> (<em><?php echo $extra["descrizioneTipo"]; ?></em>): <strong><?php echo $this->valuta($extra["totale"]); ?></strong><br />
-        <?php endforeach; ?>
-            </p>
-    <?php endif; ?>            
-            <h4>Colli</h4>
-            <p>
-                Totale colli: <strong><?php echo $this->ordCalcObj->getTotaleColli(); ?></strong><br />
-            </p>
         </div>
         <div class="my_clear" style="clear:both;">&nbsp;</div>
     </div>
@@ -58,11 +48,19 @@ $(document).ready(function () {
       data: <?php echo json_encode($arProductsGrid); ?>,
       manualColumnMove: true,
       manualColumnResize: true,
-      colHeaders: ['Disp.', <?php if($this->ordCalcObj->isMultiProduttore()) { echo "'Produttore', "; } ?> 'Codice', 'Descrizione', 'Qta Ord.', 'Qta Reale', 'Prezzo', 'Udm', 'Categoria'],
-      colWidths: [50, <?php if($this->ordCalcObj->isMultiProduttore()) { echo "150, "; } ?> 80, 380, 70, 70, 70, 120, 270],
+      colHeaders: ['Utente', 'Gruppo', 'Disp.', <?php if($this->ordCalcObj->isMultiProduttore()) { echo "'Produttore', "; } ?> 'Codice', 'Descrizione', 'Qta Ord.', 'Qta Reale', 'Prezzo', 'Udm', 'Categoria'],
+      colWidths: [100, 100, 50, <?php if($this->ordCalcObj->isMultiProduttore()) { echo "150, "; } ?> 80, 380, 70, 70, 70, 120, 270],
       columnSorting: true,
       currentRowClassName: 'currentRow',
       columns: [
+        {
+          data: 'user_nome',
+          readOnly: true
+        },
+        {
+          data: 'gas_nome',
+          readOnly: true
+        },
         {
           data: 'disponibile_ordine',
           readOnly: true

@@ -14,19 +14,20 @@
 <?php 
         $arProductsGrid = array();
         if($this->ordCalcObj->getProdottiUtenti() > 0): 
-            foreach ($this->ordCalcObj->getProdottiUtenti() AS $iduser => $user): ?>
-<?php        
-                foreach ($user["prodotti"] AS $idprodotto => $pObj):
+            foreach ($this->ordCalcObj->getProdottiUtenti() AS $iduser => $prodotti): 
+                $userDati = $prodotti["user"];
+                foreach ($prodotti["prodotti"] AS $idprodotto => $pObj):
+                    
                     $arProductsGrid[] = array(
                         'idprodotto'            => $pObj->getIdProdotto(),
                         'idlistino'             => $pObj->getIdListino(),
                         'iduser'                => $iduser,
                         'disponibile_ordine'    => $pObj->isDisponibile(),
-                        'user'                  => $user["cognome"] . " " . $user["nome"],
+                        'user'                  => $userDati->cognome . " " . $userDati->nome,
                         'qta'                   => $pObj->getQta_ByIduser($iduser),
                         'qta_reale'             => $pObj->getQtaReale_ByIduser($iduser),
                         'codice'                => $pObj->getCodice(),
-                        'descrizione'           => $pObj->getDescrizioneListino(),
+                        'descrizione'           => $pObj->getDescrizioneAnagrafica(),
                         'costo_ordine'          => $pObj->getCostoOrdine(),
                         'udm'                   => $pObj->getUdm() .($pObj->hasPezzatura() ? "<br /><small>(Minimo " . $pObj->getDescrizionePezzatura() . ")</small>" : ""),
                         'subcat'                => $pObj->getSubCategoria()
@@ -93,7 +94,7 @@ $(document).ready(function () {
           {
             data: 'qta_reale',
             type: 'numeric',
-            format: '0,0.00',
+            format: '0,0.000',
             language: 'it',
             readOnly: <?php echo (!$this->ordine->canModificaQtaOrdinate()) ? "true" : "false"; ?>
           }

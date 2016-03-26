@@ -23,12 +23,16 @@ class Controller_GestioneCassa extends MyFw_Controller {
 
     function indexAction() 
     {
-        // get&set come filter
-        $start = is_null($this->getParam("start")) ? 0 : $this->getParam("start");
-        $limit = is_null($this->getParam("limit")) ? 20 : $this->getParam("limit");
+        // init the SimplePager
+        $page = is_null($this->getParam("page")) ? 0 : $this->getParam("page");
+        $view = is_null($this->getParam("view")) ? 10 : $this->getParam("view");
+        $sPager = new MyFw_SimplePager();
+        $sPager->setPage($page);
+        $sPager->setView($view);
+        $sPager->setURL('/gestione-cassa/index');
         
         $cassaModel = new Model_Db_Cassa();
-        $movRecs = $cassaModel->getUltimiMovimentiByIdgroup($this->_userSessionVal->idgroup, $start, $limit);
+        $movRecs = $cassaModel->getUltimiMovimentiByIdgroup($this->_userSessionVal->idgroup, $sPager->getSQLStartNumber(), $sPager->getSQLLimitNumber());
         $movimenti = array();
         if(count($movRecs) > 0)
         {
@@ -37,6 +41,10 @@ class Controller_GestioneCassa extends MyFw_Controller {
             }
         }
         $this->view->movimenti = $movimenti;
+        
+        // set num_result in SimplePager
+        $sPager->setNumResults(count($movimenti));
+        $this->view->sPager = $sPager;
     }
     
 
@@ -146,7 +154,7 @@ class Controller_GestioneCassa extends MyFw_Controller {
     {
         $idordine = $this->getParam("idordine");
         $ordObj = new Model_Db_Ordini();
-        $ordine = $ordObj->getByIdOrdine($idordine);
+        $ordine = $ordObj->getByIdOrdine($idordine, $this->_userSessionVal->idgroup);
         if(is_null($ordine)) 
         {
             // REDIRECT
@@ -174,10 +182,11 @@ class Controller_GestioneCassa extends MyFw_Controller {
         $mooObj->appendProdotti()->initProdotti_ByObject($listProd);
         
         // GET PRODOTTI Ordinati
-        $listProdOrdered = $ordObj->getProdottiOrdinatiByIdordineAndIdgroup($mooObj->getIdOrdine(), $this->_userSessionVal->idgroup);
+        $listProdOrdered = $ordObj->getProdottiOrdinatiByIdordine($mooObj->getIdOrdine(), $this->_userSessionVal->idgroup);
         
         // Add Calcoli Decorator
-        $ordCalcoli = new Model_Ordini_CalcoliDecorator($mooObj, $this->_userSessionVal->idgroup);
+        $ordCalcoli = new Model_Ordini_CalcoliDecorator($mooObj);
+        $ordCalcoli->setIdgroup($this->_userSessionVal->idgroup);
         $ordCalcoli->setProdottiOrdinati($listProdOrdered);
         $this->view->ordCalcoli = $ordCalcoli;
         
@@ -188,7 +197,7 @@ class Controller_GestioneCassa extends MyFw_Controller {
     {
         $idordine = $this->getParam("idordine");
         $ordObj = new Model_Db_Ordini();
-        $ordine = $ordObj->getByIdOrdine($idordine);
+        $ordine = $ordObj->getByIdOrdine($idordine, $this->_userSessionVal->idgroup);
         if(is_null($ordine)) 
         {
             // REDIRECT
@@ -219,32 +228,19 @@ class Controller_GestioneCassa extends MyFw_Controller {
             $mooObj->appendProdotti()->initProdotti_ByObject($listProd);
 
             // GET PRODUCTS LIST with Qta Ordered
-            $ordCalcObj = new Model_Ordini_CalcoliDecorator($mooObj, $this->_userSessionVal->idgroup);
+            $ordCalcObj = new Model_Ordini_CalcoliDecorator($mooObj);
+            $ordCalcObj->setIdgroup($this->_userSessionVal->idgroup);
 
             // SET PRODOTTI ORDINATI
-            $listProdOrdered = $ordObj->getProdottiOrdinatiByIdordineAndIdgroup($mooObj->getIdOrdine(),$this->_userSessionVal->idgroup);
+            $listProdOrdered = $ordObj->getProdottiOrdinatiByIdordine($mooObj->getIdOrdine(),$this->_userSessionVal->idgroup);
             $ordCalcObj->setProdottiOrdinati($listProdOrdered);
             
             // Check If some product ordered EXISTS
             if($ordCalcObj->getProdottiUtenti() > 0)
             {
                 $cassaObj = new Model_Db_Cassa();
-                $produttoriList = ((count($mooObj->getProduttoriList()) > 0) ? implode(", ", $mooObj->getProduttoriList()) : "--");
-                foreach ($ordCalcObj->getProdottiUtenti() AS $iduser => $user)
-                {
-                    $importo = -1 * abs($ordCalcObj->getTotaleConExtraByIduser($iduser));
-                    $values = array(
-                        'iduser'    => $iduser,
-                        'importo'   => $importo,
-                        'data'      => date("Y-m-d H:i:s"),
-                        'descrizione' => 'Chiusura Ordine ' . $produttoriList,
-                        'idordine'  => $mooObj->getIdOrdine()
-                    );
-                    $cassaObj->addMovimentoOrdine($values);
-                }
-                
                 // ARCHIVIO ORDINE
-                $res = $mooObj->moveToNextState();
+                $res = $cassaObj->closeOrdine($ordCalcObj, $this->_userSessionVal->idgroup);
                 if($res)
                 {
                     $this->redirect("gestione-cassa", "index");
@@ -252,4 +248,13 @@ class Controller_GestioneCassa extends MyFw_Controller {
             }
         }
     }
+    
+    
+    function viewsaldiAction()
+    {
+        $cassaObj = new Model_Db_Cassa();
+        $saldi = $cassaObj->getSaldiGroup($this->_userSessionVal->idgroup);
+        $this->view->saldi = $saldi;
+    }
+    
 }

@@ -24,7 +24,11 @@ class Controller_Ordini extends MyFw_Controller {
         // SET idproduttore FILTER
         $fObj->setFilterByField("idproduttore", $this->getParam("idproduttore"));
         // SET stato FILTER
-        $fObj->setFilterByField("stato", $this->getParam("stato"));
+        $stato = $this->getParam("stato");
+        if(is_null($stato)) {
+            $stato = "Aperto";
+        }
+        $fObj->setFilterByField("stato", $stato);
         
         $this->view->fObj = $fObj;
         
@@ -71,7 +75,7 @@ class Controller_Ordini extends MyFw_Controller {
         
         // INIT Ordine
         $ordObj = new Model_Db_Ordini();
-        $ordine = $ordObj->getByIdOrdine($idordine);
+        $ordine = $ordObj->getByIdOrdine($idordine, $this->_userSessionVal->idgroup);
         
         // build Ordine
         $mooObj = new Model_Ordini_Ordine( new Model_AF_UserOrdineFactory() );
@@ -98,10 +102,11 @@ class Controller_Ordini extends MyFw_Controller {
         $this->view->ordine = $mooObj;
         
         // GET PRODUCTS LIST with Qta Ordered
-        $listProdOrdered = $ordObj->getProdottiOrdinatiByIdordineAndIdgroup($mooObj->getIdOrdine(),$this->_userSessionVal->idgroup);
+        $listProdOrdered = $ordObj->getProdottiOrdinatiByIdordine($mooObj->getIdOrdine(),$this->_userSessionVal->idgroup);
 
         // SET ORDINE e PRODOTTI
-        $ordCalcObj = new Model_Ordini_CalcoliDecorator($mooObj, $this->_userSessionVal->idgroup);
+        $ordCalcObj = new Model_Ordini_CalcoliDecorator($mooObj);
+        $ordCalcObj->setIdgroup($this->_userSessionVal->idgroup);
         $ordCalcObj->setProdottiOrdinati($listProdOrdered);
         $this->view->ordCalcObj = $ordCalcObj;
 //        Zend_Debug::dump($this->view->listaProdotti);die;
@@ -116,7 +121,7 @@ class Controller_Ordini extends MyFw_Controller {
         $idordine = $this->getParam("idordine");
         $ordObj = new Model_Db_Ordini();
         // INIT Ordine
-        $ordine = $ordObj->getByIdOrdine($idordine);
+        $ordine = $ordObj->getByIdOrdine($idordine, $this->_userSessionVal->idgroup);
         // Validate ORDINE for this GROUP
         /**
          *  @todo
@@ -158,10 +163,11 @@ class Controller_Ordini extends MyFw_Controller {
         }
         
         // GET PRODUCTS LIST with Qta Ordered
-        $listProdOrdered = $ordObj->getProdottiOrdinatiByIdordineAndIdgroup($mooObj->getIdOrdine(), $this->_userSessionVal->idgroup);
+        $listProdOrdered = $ordObj->getProdottiOrdinatiByIdordine($mooObj->getIdOrdine(), $this->_userSessionVal->idgroup);
 
         // SET ORDINE e PRODOTTI
-        $ordCalcObj = new Model_Ordini_CalcoliDecorator($mooObj, $this->_userSessionVal->idgroup);
+        $ordCalcObj = new Model_Ordini_CalcoliDecorator($mooObj);
+        $ordCalcObj->setIdgroup($this->_userSessionVal->idgroup);
         $ordCalcObj->setProdottiOrdinati($listProdOrdered);
         $this->view->ordCalcObj = $ordCalcObj;
         

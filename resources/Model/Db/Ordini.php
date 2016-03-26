@@ -11,17 +11,18 @@ class Model_Db_Ordini extends MyFw_DB_Base {
         parent::__construct();
     }
     
-    function getByIdOrdine($idordine) {
-        $sql = "SELECT o.*, CONCAT(u.nome, ' ', u.cognome) AS supervisore_name,"
+    function getByIdOrdine($idordine, $idgroup) {
+        $sql = "SELECT o.*, og.archiviato, CONCAT(u.nome, ' ', u.cognome) AS supervisore_name,"
             . " g.idgroup AS supervisore_idgroup, g.nome AS supervisore_group"
             . " FROM ordini AS o"
+            . " JOIN ordini_groups AS og ON o.idordine=og.idordine AND og.idgroup_slave= :idgroup"
             . " JOIN users AS u ON o.iduser_supervisore=u.iduser"
             . " JOIN users_group AS ug ON o.iduser_supervisore=ug.iduser"
             . " JOIN groups AS g ON ug.idgroup=g.idgroup"
-            . " WHERE idordine= :idordine";
+            . " WHERE o.idordine= :idordine";
         
         $sth = $this->db->prepare($sql);
-        $sth->execute(array('idordine' => $idordine));
+        $sth->execute(array('idordine' => $idordine, 'idgroup' => $idgroup));
         if($sth->rowCount() > 0) {
             return $sth->fetch(PDO::FETCH_OBJ);
         }
@@ -35,7 +36,7 @@ class Model_Db_Ordini extends MyFw_DB_Base {
               ." WHERE o.condivisione='PUB'"
               ." OR (o.condivisione='PRI' AND og.idgroup_master= :idgroup)"
               ." OR (o.condivisione='SHA' AND og.idgroup_slave = :idgroup)"
-              ." ORDER BY o.archiviato, o.data_fine DESC";
+              ." ORDER BY og.archiviato, o.data_fine DESC";
         $sth = $this->db->prepare($sql);
         $sth->execute(array('idgroup' => $idgroup));
         if($sth->rowCount() > 0) {
@@ -77,7 +78,7 @@ class Model_Db_Ordini extends MyFw_DB_Base {
                 }
             }
         }
-        $sql .= " ORDER BY o.archiviato, o.data_fine DESC";
+        $sql .= " ORDER BY og.archiviato, o.data_fine DESC";
 //        echo $sql; die;
         $sth = $this->db->prepare($sql);
 //        Zend_Debug::dump($sth);die;
@@ -85,13 +86,11 @@ class Model_Db_Ordini extends MyFw_DB_Base {
         return $sth->fetchAll(PDO::FETCH_OBJ);
     }
     
-    function getAllByDate($date, $type) {
+    function getAllByDate($data, $type) {
         $sql = "SELECT * FROM ordini AS o"
-              ." LEFT JOIN groups AS g ON o.idgroup=g.idgroup"
-              ." LEFT JOIN produttori AS p ON o.idproduttore=p.idproduttore"
-              ." WHERE DATE_FORMAT(o.$type, '%Y-%m-%d')= :date";
+              ." WHERE DATE_FORMAT(o.$type, '%Y-%m-%d')= :data";
         $sth = $this->db->prepare($sql);
-        $sth->execute(array('date' => $date));
+        $sth->execute(array('data' => $data));
         if($sth->rowCount() > 0) {
             return $sth->fetchAll(PDO::FETCH_OBJ);
         }
@@ -107,7 +106,7 @@ class Model_Db_Ordini extends MyFw_DB_Base {
               ." AND ("
                 . " o.condivisione='PUB' OR og.idgroup_slave= :idgroup"
                 . ")"
-              ." ORDER BY o.archiviato, o.data_consegnato DESC";
+              ." ORDER BY og.archiviato DESC, o.data_consegnato DESC";
         $sth = $this->db->prepare($sql);
         $sth->execute(array('idgroup' => $idgroup));
         if($sth->rowCount() > 0) {
@@ -243,17 +242,22 @@ class Model_Db_Ordini extends MyFw_DB_Base {
     /**
      * GET all prodotti ordered by idordine
      * @param int $idordine
+     * @param int $idgroup
      * @return array the results set
      */
-    function getProdottiOrdinatiByIdordineAndIdgroup($idordine, $idgroup) 
+    function getProdottiOrdinatiByIdordine($idordine, $idgroup=false) 
     {
-        $sqlp = "SELECT oup.* "
+        $sql = "SELECT oup.* "
                ." FROM ordini_user_prodotti AS oup "
                ." JOIN users_group AS up ON oup.iduser=up.iduser"
-               ." WHERE oup.idordine= :idordine"
-               ." AND up.idgroup = :idgroup";
-        $sthp = $this->db->prepare($sqlp);
-        $sthp->execute(array('idordine' => $idordine, 'idgroup' => $idgroup));
+               ." WHERE oup.idordine= :idordine";
+        $params = array('idordine' => $idordine);
+        if($idgroup !== false) {
+            $sql .= " AND up.idgroup = :idgroup";
+            $params['idgroup'] = $idgroup;
+        }
+        $sthp = $this->db->prepare($sql);
+        $sthp->execute($params);
         $prodotti = $sthp->fetchAll(PDO::FETCH_OBJ);
         return $prodotti;
     }
@@ -265,23 +269,43 @@ class Model_Db_Ordini extends MyFw_DB_Base {
      */
     function getGroupsWithAlmostOneProductOrderedByIdOrdine($idordine)
     {
-        $sql = "SELECT DISTINCT ug.idgroup, g.nome "
+        $sql = "SELECT DISTINCT ug.idgroup, g.nome AS nome_gruppo, og.iduser_incaricato, "
+               ." u.nome AS nome_incaricato, u.cognome AS cognome_incaricato, u.tel AS tel_incaricato, u.email AS email_incaricato "
                ." FROM ordini_user_prodotti AS oup "
                ." JOIN users_group AS ug ON oup.iduser=ug.iduser"
                ." JOIN groups AS g ON ug.idgroup=g.idgroup"
+               ." JOIN ordini_groups AS og ON oup.idordine=og.idordine AND og.idgroup_slave=g.idgroup"
+               ." LEFT JOIN users AS u ON og.iduser_incaricato=u.iduser"
                ." WHERE oup.idordine= :idordine";
         $sth = $this->db->prepare($sql);
         $sth->execute(array('idordine' => $idordine));
         $groups = array();
         if($sth->rowCount() > 0) {
             foreach($sth->fetchAll(PDO::FETCH_OBJ) AS $group) {
-                $groups[$group->idgroup] = $group->nome;
+                $groups[$group->idgroup] = $group;
             }
         }
         return $groups;
     }
     
-    
+    function getUsersWithAlmostOneProductOrderedByIdOrdine($idordine)
+    {
+        $sql = "SELECT DISTINCT oup.iduser, u.*, ug.idgroup, g.nome AS nome_gas "
+               ." FROM ordini_user_prodotti AS oup "
+               ." JOIN users AS u ON oup.iduser=u.iduser"
+               ." JOIN users_group AS ug ON oup.iduser=ug.iduser"
+               ." JOIN groups AS g ON ug.idgroup=g.idgroup"
+               ." WHERE oup.idordine= :idordine";
+        $sth = $this->db->prepare($sql);
+        $sth->execute(array('idordine' => $idordine));
+        $users = array();
+        if($sth->rowCount() > 0) {
+            foreach($sth->fetchAll(PDO::FETCH_OBJ) AS $user) {
+                $users[$user->iduser] = $user;
+            }
+        }
+        return $users;
+    }
     
     /**
      *  SQL FILTERS for STATO
@@ -291,31 +315,31 @@ class Model_Db_Ordini extends MyFw_DB_Base {
         switch ($stato)
         {
             case Model_Ordini_State_States_Pianificato::STATUS_NAME:
-                $sql = " AND NOW() < o.data_inizio AND o.archiviato='N'";
+                $sql = " AND NOW() < o.data_inizio AND og.archiviato='N'";
                 break;
 
             case Model_Ordini_State_States_Aperto::STATUS_NAME:
-                $sql = " AND NOW() >= o.data_inizio AND NOW() <= o.data_fine AND o.archiviato='N'";
+                $sql = " AND NOW() >= o.data_inizio AND NOW() <= o.data_fine AND og.archiviato='N'";
                 break;
             
             case Model_Ordini_State_States_Chiuso::STATUS_NAME:
-                $sql = " AND NOW() > o.data_fine AND ( NOW() <= o.data_inviato OR o.data_inviato IS NULL) AND o.archiviato='N'";
+                $sql = " AND NOW() > o.data_fine AND ( NOW() <= o.data_inviato OR o.data_inviato IS NULL) AND og.archiviato='N'";
                 break;
 
             case Model_Ordini_State_States_Inviato::STATUS_NAME:
-                $sql = " AND NOW() > o.data_inviato AND ( NOW() <= o.data_arrivato OR o.data_arrivato IS NULL) AND o.archiviato='N'";
+                $sql = " AND NOW() > o.data_inviato AND ( NOW() <= o.data_arrivato OR o.data_arrivato IS NULL) AND og.archiviato='N'";
                 break;
 
             case Model_Ordini_State_States_Arrivato::STATUS_NAME:
-                $sql = " AND NOW() > o.data_arrivato AND ( NOW() <= o.data_consegnato OR o.data_consegnato IS NULL) AND o.archiviato='N'";
+                $sql = " AND NOW() > o.data_arrivato AND ( NOW() <= o.data_consegnato OR o.data_consegnato IS NULL) AND og.archiviato='N'";
                 break;
 
             case Model_Ordini_State_States_Consegnato::STATUS_NAME:
-                $sql = " AND NOW() > o.data_consegnato AND o.archiviato='N'";
+                $sql = " AND NOW() > o.data_consegnato AND og.archiviato='N'";
                 break;
 
             case Model_Ordini_State_States_Archiviato::STATUS_NAME:
-                $sql = " AND o.archiviato='S' ";
+                $sql = " AND og.archiviato='S' ";
                 break;
 
         }

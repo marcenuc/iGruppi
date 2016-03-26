@@ -19,7 +19,7 @@
         <?php echo $this->partial('gestioneordini/header-status-details.tpl.php', array('ordine' => $this->ordine) ); ?>
         <?php echo $this->partial('gestioneordini/header-menu.tpl.php', array('ordine' => $this->ordine) ); ?>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4 hidden-print">
     <?php if(!$this->ordine->isSupervisoreOrdine()): ?>
             <div class="alert alert-warning" role="alert">
                 <b>Attenzione!</b><br />
@@ -35,9 +35,8 @@
                     Riepilogo Multi Gruppi <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu">
-                    <li><a href="#">Totale Ordinato</a></li>
-                    <li><a href="#">Parziali Utenti/Prodotti</a></li>
-                    <li><a href="#">Dettaglio Utenti</a></li>
+                    <li><a href="/gestione-ordini/dettagliomg/idordine/<?php echo $this->ordine->getIdOrdine(); ?>/tipo/totali">Totale Ordinato</a></li>
+                    <li><a href="/gestione-ordini/dettagliomg/idordine/<?php echo $this->ordine->getIdOrdine(); ?>/tipo/utenti">Parziali Utenti/Prodotti</a></li>
                   </ul>
                 </div>                
         <?php endif; ?>

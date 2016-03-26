@@ -1,8 +1,15 @@
 <div class="row">
   <div class="col-md-12">
 <?php if($this->ordCalcObj->getProdottiUtenti() > 0): ?>
-    <?php foreach ($this->ordCalcObj->getProdottiUtenti() AS $iduser => $user): ?>
-        <h3 class="big-margin-top"><strong><?php echo $user["nome"] . " " . $user["cognome"]; ?></strong></h3>
+    <?php foreach ($this->ordCalcObj->getProdottiUtenti() AS $iduser => $dataUser): 
+              $user = $dataUser["user"];
+        ?>
+        <h4 class="big-margin-top"><strong><?php echo $user->nome . " " . $user->cognome; ?></strong></h4>
+        <p>
+            <?php echo $user->indirizzo; ?> - <?php echo $user->localita; ?> (<?php echo $user->provincia; ?>)<br />
+            Tel: <?php echo $user->tel; ?><br />
+            Email: <a href="mailto: <?php echo $user->email; ?>"><?php echo $user->email; ?></a>
+        </p>
         <table class="table table-condensed">
             <thead>
               <tr>
@@ -14,14 +21,14 @@
               </tr>
             </thead>
             <tbody>
-        <?php foreach ($user["prodotti"] AS $idprodotto => $pObj): ?>
+        <?php foreach ($dataUser["prodotti"] AS $idprodotto => $pObj): ?>
             <?php if( $pObj->isDisponibile()): ?>
                 <tr>
             <?php else: ?>
                 <tr class="danger strike">
             <?php endif; ?>
                     <td><strong><?php echo $pObj->getCodice();?></strong></td>
-                    <td><?php echo $pObj->getDescrizioneListino();?></td>
+                    <td><?php echo $pObj->getDescrizioneAnagrafica();?></td>
                     <td class="text-right"><strong><?php echo $this->formatQta( $pObj->getQtaReale_ByIduser($iduser), $pObj->getUdm() );?></strong></td>
                     <td><?php echo $pObj->getDescrizioneCosto();?></td>
                     <td class="text-right"><strong><?php echo $this->valuta($pObj->getTotale_ByIduser($iduser)); ?></strong></td>
